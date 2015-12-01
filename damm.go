@@ -24,17 +24,17 @@ var (
 	ErrNonDigitSymbol = errors.New("Digit strings must contain digits only")
 
 	// quasi contains the quasi group used for computing the check digit.
-	quasi = [10][10]int8{
-		{0, 3, 1, 7, 5, 9, 8, 6, 4, 2},
-		{7, 0, 9, 2, 1, 5, 4, 8, 6, 3},
-		{4, 2, 0, 6, 8, 7, 1, 3, 5, 9},
-		{1, 7, 5, 0, 9, 8, 3, 4, 2, 6},
-		{6, 1, 2, 3, 0, 4, 5, 9, 7, 8},
-		{3, 6, 7, 4, 2, 0, 9, 5, 8, 1},
-		{5, 8, 6, 9, 7, 2, 0, 1, 3, 4},
-		{8, 9, 4, 5, 3, 6, 2, 0, 1, 7},
-		{9, 4, 3, 8, 6, 1, 7, 2, 0, 5},
-		{2, 5, 8, 1, 4, 3, 6, 7, 9, 0},
+	quasi = [100]int8{
+		00, 30, 10, 70, 50, 90, 80, 60, 40, 20,
+		70, 00, 90, 20, 10, 50, 40, 80, 60, 30,
+		40, 20, 00, 60, 80, 70, 10, 30, 50, 90,
+		10, 70, 50, 00, 90, 80, 30, 40, 20, 60,
+		60, 10, 20, 30, 00, 40, 50, 90, 70, 80,
+		30, 60, 70, 40, 20, 00, 90, 50, 80, 10,
+		50, 80, 60, 90, 70, 20, 00, 10, 30, 40,
+		80, 90, 40, 50, 30, 60, 20, 00, 10, 70,
+		90, 40, 30, 80, 60, 10, 70, 20, 00, 50,
+		20, 50, 80, 10, 40, 30, 60, 70, 90, 00,
 	}
 
 	toStr = [10]string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
@@ -45,12 +45,12 @@ var (
 func checkInt(digits string) (int, error) {
 	var c int8
 	for _, x := range digits {
-		if !('0' <= x && x <= '9') {
+		if x < '0' || x > '9' {
 			return 0, ErrNonDigitSymbol
 		}
-		c = quasi[c][x&0xF]
+		c = quasi[c+int8(x&0xF)]
 	}
-	return int(c), nil
+	return int(c) / 10, nil
 }
 
 // CheckDigit computes the check digit and returns it as a string. The function

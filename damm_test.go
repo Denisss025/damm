@@ -37,3 +37,15 @@ func TestDamm2(t *testing.T) {
 		t.Errorf("validate %s returned true", s2)
 	}
 }
+
+var benchCheck string
+
+func BenchmarkCheckDigit(b *testing.B) {
+	s := "0123456789"
+	for i := 0; i < b.N; i++ {
+		c, err := CheckDigit(s)
+		if err != nil {
+			benchCheck = c
+		}
+	}
+}

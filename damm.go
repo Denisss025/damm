@@ -18,65 +18,52 @@ package damm
 
 import (
 	"errors"
-	"strconv"
 )
 
-// convert converts the digits from string into an int8 slice.
-func convert(digits string) (a []int8, err error) {
-	a = make([]int8, len(digits))
-	for i, r := range digits {
-		x := r - '0'
-		if !(0 <= x && x <= 9) {
-			return nil, errors.New(
-				"digits strings must contain only digits")
+var (
+	ErrNonDigitSymbol = errors.New("Digit strings must contain digits only")
+
+	// quasi contains the quasi group used for computing the check digit.
+	quasi = [10][10]int8{
+		{0, 3, 1, 7, 5, 9, 8, 6, 4, 2},
+		{7, 0, 9, 2, 1, 5, 4, 8, 6, 3},
+		{4, 2, 0, 6, 8, 7, 1, 3, 5, 9},
+		{1, 7, 5, 0, 9, 8, 3, 4, 2, 6},
+		{6, 1, 2, 3, 0, 4, 5, 9, 7, 8},
+		{3, 6, 7, 4, 2, 0, 9, 5, 8, 1},
+		{5, 8, 6, 9, 7, 2, 0, 1, 3, 4},
+		{8, 9, 4, 5, 3, 6, 2, 0, 1, 7},
+		{9, 4, 3, 8, 6, 1, 7, 2, 0, 5},
+		{2, 5, 8, 1, 4, 3, 6, 7, 9, 0},
+	}
+
+	toStr = [10]string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+)
+
+// checkInt computes a check digit and returns it as an integer. If the digit
+// argument contains non-digit symbols, an error is returned.
+func checkInt(digits string) (int, error) {
+	var c int8
+	for _, x := range digits {
+		if !('0' <= x && x <= '9') {
+			return 0, ErrNonDigitSymbol
 		}
-		a[i] = int8(x)
+		c = quasi[c][x&0xF]
 	}
-	return a, nil
+	return int(c), nil
 }
 
-// quasi contains the quasi group used for computing the check digit.
-var quasi = [10][10]int8{
-	{0, 3, 1, 7, 5, 9, 8, 6, 4, 2},
-	{7, 0, 9, 2, 1, 5, 4, 8, 6, 3},
-	{4, 2, 0, 6, 8, 7, 1, 3, 5, 9},
-	{1, 7, 5, 0, 9, 8, 3, 4, 2, 6},
-	{6, 1, 2, 3, 0, 4, 5, 9, 7, 8},
-	{3, 6, 7, 4, 2, 0, 9, 5, 8, 1},
-	{5, 8, 6, 9, 7, 2, 0, 1, 3, 4},
-	{8, 9, 4, 5, 3, 6, 2, 0, 1, 7},
-	{9, 4, 3, 8, 6, 1, 7, 2, 0, 5},
-	{2, 5, 8, 1, 4, 3, 6, 7, 9, 0},
-}
-
-// checkInt computes the check digit and returns it as integer.
-func checkInt(a []int8) int {
-	c := int8(0)
-	for _, x := range a {
-		c = quasi[c][x]
-	}
-	return int(c)
-}
-
-// CheckDigit computes the check digit and returns it as string. The function
-// argument must only contain decimal digits.
-func CheckDigit(digits string) (c string, err error) {
-	a, err := convert(digits)
-	if err != nil {
-		return "", err
-	}
-	x := checkInt(a)
-	c = strconv.Itoa(x)
-	return
+// CheckDigit computes the check digit and returns it as a string. The function
+// argument must contain decimal digits only.
+func CheckDigit(digits string) (string, error) {
+	x, err := checkInt(digits)
+	return toStr[x], err
 }
 
 // Validate checks a number with the check digit appended. The function returns
 // true only if the argument contains only decimal digits and the appended
 // check digit is correct.
 func Validate(digits string) bool {
-	a, err := convert(digits)
-	if err != nil {
-		return false
-	}
-	return checkInt(a) == 0
+	x, err := checkInt(digits)
+	return err == nil && x == 0
 }
